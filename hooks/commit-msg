@@ -1,0 +1,91 @@
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+"""
+Commit message verification script.
+Its name must be `commit-msg`.
+It must be placed in the `.git/hooks` directory.
+It's aimed to be used in association with the following template file:
+feat(:): <subject>
+
+<body>
+
+<footer>
+
+#types: feat, fix, docs, style, refactor, test, chore(maintain)
+
+This template file's name must be `commit.template` and be placed in
+the .git directory. To apply this template, use the command:
+
+  `git config template-commit .git/commit.template`
+
+You can also/either place it in your home directory to apply this
+template to all your projects. To do so, use the command:
+
+  `git config --global commit.template ~/.commit.template`
+
+
+This script includes a verification of the global message pattern:
+  1 line for special commits (linking another commit, or a issue).
+  3 lines for normal commit, with the second line being empty.
+Each commit (special or not) must respect some regexps:
+  (feat|fix|docs|style|refactor|test|chore)\(.+\)\:\ .+
+  is the first line of a "normal" commit.
+  The second is empty and the remaining part of the commit is not
+  checked.
+  A commit that is linked to another one must be like:
+  ^(See commit \S+)$
+  A commit that fix an issue must be like:
+  ^(Fix issue \S+)$
+
+Note that you can reference an issu event in a normal commit.
+You should use normal commits over special commits, unless no message
+is needed.
+Remember: Explicit is Better than Implicit!
+"""
+
+import sys
+import re
+
+
+if __name__ == "__main__":
+
+  if len (sys.argv) != 2:
+    print >> sys.stderr, "You must give the commit file as first argument"
+    exit (1)
+
+  regexps = [
+    "^(feat|fix|docs|style|refactor|test|chore)\(.+\)\:\ .+$",
+    "^$",
+    "^.+$"
+  ]
+  special_commits = \
+    link_commit_regex, fix_issue_regex, = \
+    "^(See commit \S+)$", "^(Fix issue \S+)$", 
+
+  line_max_length = 70
+
+  with open (sys.argv[1], "r") as commit_file:
+    lines = commit_file.readlines ()
+
+  if len(lines) == 1:
+    for regex in special_commits:
+      if re.match (regex, lines[0]):
+        exit(0)
+    print >> sys.stderr, "One-line commits must match one of the" \
+      "special commit regex:\n" + '\n'.join(special_commits)
+    exit(1)
+  if len (lines) < 3:
+    print >> sys.stderr, "Bad global pattern: There must be at least 3 lines."
+    exit (1)
+
+  if len(lines[0]) > line_max_length:
+    print >> sys.stderr, "The first line is %d characters too long." \
+      " Shorten it, please." % (len(lines[0])-line_max_length)
+    exit (1)
+  for no, (line, regexp) in enumerate (zip (lines, regexps)):
+    if re.match (regexp, line) is None:
+      print >> sys.stderr, "Bad pattern at line %d:\n'%s'\n%s" % (no+1,
+        line.replace ("\n", ""), regexp)
+      exit (1)
+
+  exit (0)
