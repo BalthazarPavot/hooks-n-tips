@@ -59,8 +59,8 @@ if __name__ == "__main__":
     "^.+$"
   ]
   special_commits = \
-    link_commit_regex, fix_issue_regex, = \
-    "^(See commit \S+)$", "^(Fix issue \S+)$", 
+    link_commit_regex, fix_issue_regex, update_submodule, = \
+    "^(See commit \S+)$", "^(Fix issue \S+)$", "^(Submodule update)$",
 
   line_max_length = 70
 
